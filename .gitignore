@@ -1,0 +1,23 @@
+# Secrets
+*.key
+.env
+.env.*
+!.env.example
+
+# Rails (api/)
+api/log/*
+!api/log/.keep
+api/tmp/*
+!api/tmp/.keep
+api/storage/*
+!api/storage/.keep
+api/db/*.sqlite3*
+api/public/assets
+
+# Node (web/) — web/.gitignore also covers its own build output
+node_modules/
+dist/
+
+# OS / editor
+.DS_Store
+.idea/
