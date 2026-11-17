@@ -1,7 +1,0 @@
-Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
-Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
-Using vips to process variants requires the libvips library. Please install libvips using the instructions on the libvips website.
-  [1m[35mSQL (0.3ms)[0m  [1m[35mSET search_path TO public /*application='Api'*/[0m
-  [1m[35m (151.0ms)[0m  [1m[35mCREATE DATABASE "api_development" ENCODING = 'unicode' /*application='Api'*/[0m
-  [1m[35mSQL (0.2ms)[0m  [1m[35mSET search_path TO public /*application='Api'*/[0m
-  [1m[35m (63.7ms)[0m  [1m[35mCREATE DATABASE "api_test" ENCODING = 'unicode' /*application='Api'*/[0m
