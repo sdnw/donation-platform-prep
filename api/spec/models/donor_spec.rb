@@ -21,7 +21,5 @@ describe "email uniqueness" do
   before { Donor.create!(name: "Alice Smith", email: "alice@example.com") }
 
   it { should validate_uniqueness_of(:email).case_insensitive }
-
 end
-
 end

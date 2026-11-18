@@ -36,4 +36,3 @@ RSpec.describe Fund, type: :model do
     end
   end
 end
-

@@ -10,9 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_013733) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_18_174535) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "donations", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.string "currency", default: "usd", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "frequency", default: 0, null: false
+    t.bigint "donor_id", null: false
+    t.bigint "fund_id", null: false
+    t.string "stripe_payment_intent_id"
+    t.string "idempotency_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["donor_id"], name: "index_donations_on_donor_id"
+    t.index ["fund_id"], name: "index_donations_on_fund_id"
+    t.index ["idempotency_key"], name: "index_donations_on_idempotency_key", unique: true
+    t.index ["stripe_payment_intent_id"], name: "index_donations_on_stripe_payment_intent_id", unique: true
+  end
 
   create_table "donors", force: :cascade do |t|
     t.string "name", null: false
@@ -33,4 +50,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_013733) do
     t.index ["name"], name: "index_funds_on_name", unique: true
     t.index ["slug"], name: "index_funds_on_slug", unique: true
   end
+
+  add_foreign_key "donations", "donors"
+  add_foreign_key "donations", "funds"
 end
