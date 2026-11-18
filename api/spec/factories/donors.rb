@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :donor do
-    name { "MyString" }
-    email { "MyString" }
+    name { Faker::Name.name }
+    sequence(:email) { |n| "donor#{n}@example.com" }
   end
 end
