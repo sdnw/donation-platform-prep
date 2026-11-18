@@ -20,4 +20,8 @@ class Donation < ApplicationRecord
   validates :currency,
   presence: true,
   inclusion: { in: %w[usd], message: "%{value} is not a supported currency" }
+
+  scope :for_fund, ->(fund) { where(fund: fund) }
+  scope :in_range, ->(range) { where(created_at: range) }
+  scope :recurring, -> { where.not(frequency: :one_time) }
 end

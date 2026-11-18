@@ -124,4 +124,65 @@ RSpec.describe Donation, type: :model do
       expect(Donation.count).to eq(2)
     end
   end
+
+  describe 'scopes' do
+    describe '.for_fund' do
+      let(:fund) { create(:fund) }
+      let!(:matching_donation) { create(:donation, fund: fund) }
+      let!(:other_donation) { create(:donation) }
+
+      it 'returns donations belonging to the given fund' do
+        expect(Donation.for_fund(fund)).to contain_exactly(matching_donation)
+      end
+    end
+
+    describe '.in_range' do
+      let!(:recent_donation) { create(:donation, created_at: 2.days.ago) }
+      let!(:old_donation) { create(:donation, created_at: 10.days.ago) }
+
+      it 'returns donations created within the given range' do
+        expect(Donation.in_range(5.days.ago..Time.current)).to contain_exactly(recent_donation)
+      end
+    end
+
+    describe '.recurring' do
+      let!(:one_time_donation) { create(:donation) }
+      let!(:monthly_donation) { create(:donation, :monthly) }
+
+      it 'returns only monthly donations' do
+        expect(Donation.recurring).to contain_exactly(monthly_donation)
+      end
+    end
+
+    describe 'chaining' do
+      let!(:succeeded_monthly) { create(:donation, :succeeded, :monthly) }
+      let!(:pending_monthly) { create(:donation, :monthly) }
+      let!(:succeeded_one_time) { create(:donation, :succeeded) }
+
+      it 'combines the enum scope with a custom scope' do
+        expect(Donation.succeeded.recurring).to contain_exactly(succeeded_monthly)
+      end
+    end
+  end
+
+  describe 'deleting a parent' do
+    it "refuses to delete a fund that has donations" do
+      donation = create(:donation)
+
+      expect(donation.fund.destroy).to be false
+      expect(Fund.exists?(donation.fund_id)).to be true
+    end
+
+    it "refuses to delete a donor that has donations" do
+      donation = create(:donation)
+
+      expect(donation.donor.destroy).to be false
+      expect(Donor.exists?(donation.donor_id)).to be true
+    end
+  end
+
+  it "can't delete a fund that has donations" do
+    donation = create(:donation)
+    expect(donation.fund.destroy).to be false
+  end
 end
