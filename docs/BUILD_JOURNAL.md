@@ -107,10 +107,47 @@ cache were pushed to a public repo.
 4. **What stops a double charge?** The unique `idempotency_key`. (Phase 3 builds the rest.)
 5. **Why a partial index for the default fund?** It allows many non-default rows and only one default.
 
-## Still to do in Phase 1
-- [ ] `has_many :donations` on Donor and Fund
-- [ ] Donation scopes: `for_fund`, `in_range`, `recurring` (`succeeded` is free from the enum)
-- [ ] Seeds, including a General Fund with `is_default: true`
-- [ ] Tribute, RecurringPlan, AdminUser (thin or skipped, depending on time)
-- [ ] PR for `phase-1/donation`
+6. **Why `restrict_with_error` on `has_many :donations`?** Deleting a fund or donor must never wipe money history.
+7. **Why are seeds safe to run twice?** `find_or_create_by!` on a fixed key (slug, email, idempotency key).
+
+## Phase 1 status (Nov 18)
+- [x] `has_many :donations, dependent: :restrict_with_error` on Donor and Fund
+- [x] Scopes `for_fund`, `in_range`, `recurring` (`succeeded` is free from the enum), with specs
+- [x] Seeds: 4 funds (General Fund is the default), 5 donors, 5 donations
+- [x] PR #3 for `phase-1/donation`
+- [ ] Optional spec: a new Donation starts pending and one_time
 - [ ] Phase gate: draw the schema from memory, answer the quiz, write `LEARNING_LOG.md`
+
+---
+
+## Scope decision: MVP matched to the resume (Nov 18)
+
+**Resume claim:** "Delivered nonprofit WordPress platforms (Rise Above Opioids, Valley Youth House) with custom taxonomies and content carousels; built the Valley Youth House donation workflow that processed a $100,000 donation during its first holiday campaign."
+
+| Resume bullet | Where it lands in the rebuild |
+| --- | --- |
+| Built the donation workflow | Phases 2 and 3: donate form, create donation, pay, confirm |
+| Processed a $100,000 donation | Phase 3: integer cents, idempotency, status changes |
+| Custom taxonomies | Funds (Camps, Parks, Shelters) categorize donations |
+| Content carousels | Small React piece, only if time allows |
+
+**Nothing is cut.** You confirmed the original VYH app had all of these: Stripe payments, double-charge prevention, webhooks, admin login and donation list, reports, and monthly (recurring) gifts. So you must be able to explain each one.
+
+**Build order, by interview value** (deep first, thin after):
+| Order | Build | Depth |
+| --- | --- | --- |
+| 1 | Phase 2: `GET /funds`, `POST /donations`, `GET /donations` | Full |
+| 2 | Phase 3: `Donations::Create`, Stripe PaymentIntent, idempotency key, webhook that flips pending to succeeded and ignores repeats | Full. The most important talk-track |
+| 3 | React donate form: fund dropdown, amount, submit | Thin |
+| 4 | Admin: Devise login, donation list with filters | Thin |
+| 5 | Reports: totals by fund and date range | Thin, one endpoint |
+| 6 | Recurring gifts: Stripe subscription, `RecurringPlan` | Thin, and explain it |
+
+**How the original was built (from you, Nov 18):** the Valley Youth House website is WordPress, but the donation platform was built in **Rails and React**, because they wanted more control than a WordPress setup gives.
+
+**Say this in the interview:**
+> "The site is WordPress, but I built the donation workflow as a separate Rails and React app, because the team wanted more control than WordPress gives. This repo is my from-scratch rebuild of it."
+
+**Confirmed by you (Nov 18):** all of it was in the original: Stripe, idempotency, webhooks, admin, reports and recurring gifts. So the rebuild covers your real work, and you can say "I built this" for each piece. Still be ready to say what you did yourself on each piece.
+
+**Quiz answer to remember:** `POST /donations` needs an `Idempotency-Key` header so a retried or double-clicked request can't create a second charge.

@@ -23,6 +23,15 @@ RSpec.describe Fund, type: :model do
     it { should validate_uniqueness_of(:slug).case_insensitive }
   end
 
+  describe ".active" do
+    it "returns only active funds" do
+      active_fund = create(:fund)
+      create(:fund, :inactive)
+
+      expect(Fund.active).to contain_exactly(active_fund)
+    end
+  end
+
   describe "default fund" do
     it "allows only one default fund" do
       create(:fund, :default)
