@@ -3,7 +3,7 @@
 What we did, and **why**, phase by phase. Read it at the end of the day.
 Kept by Claude. Your own words go in `LEARNING_LOG.md`.
 
-Interview: about 2026-11-20. Mode: accelerated (you try for 10-15 min, I fill in the blanks).
+Interview: Wednesday 2026-12-02 (was about 2026-11-20). Mode: accelerated (you try for 10-15 min, I fill in the blanks).
 
 ---
 
@@ -151,3 +151,19 @@ cache were pushed to a public repo.
 **Confirmed by you (Nov 18):** all of it was in the original: Stripe, idempotency, webhooks, admin, reports and recurring gifts. So the rebuild covers your real work, and you can say "I built this" for each piece. Still be ready to say what you did yourself on each piece.
 
 **Quiz answer to remember:** `POST /donations` needs an `Idempotency-Key` header so a retried or double-clicked request can't create a second charge.
+
+---
+
+## Scope update (Nov 25)
+
+The interview is Wednesday 2026-12-02. The format is a debugging situation, a conversation about how you work, and resume validation questions. Fundamentals repetition (drill page, katas, planted bugs, spoken answers) is now the main prep, and this repo supports it.
+
+What changed in the build order (details in `DONATION_PLATFORM_PLAN.md`, "Interview timeline and scope"):
+- **Build by Fri Nov 27:** finish Phase 2, then the core of Phase 3 (`Donations::Create`, idempotency, Stripe stubbed).
+- **Thin by Sat Nov 28:** one React donate form with loading and error states and one test.
+- **Kata only:** Redux, in a scratch folder.
+- **Explain only:** webhook de-duplication, admin, reports, recurring gifts, SOAP, Docker, AWS. Build the webhook only if time is left over.
+
+Why: the repo's main job is now to refresh the flagship talk-track and to give you code to break on purpose. Your claim list is unchanged, because you still explain every piece of the original workflow.
+
+Open items carried over: the Phase 1 phase gate (draw the schema from memory, quiz, learning log in your own words) and reconciling the donations routes (`show`, `create`) with the generated controller and spec stubs.
