@@ -167,3 +167,36 @@ What changed in the build order (details in `DONATION_PLATFORM_PLAN.md`, "Interv
 Why: the repo's main job is now to refresh the flagship talk-track and to give you code to break on purpose. Your claim list is unchanged, because you still explain every piece of the original workflow.
 
 Open items carried over: the Phase 1 phase gate (draw the schema from memory, quiz, learning log in your own words) and reconciling the donations routes (`show`, `create`) with the generated controller and spec stubs.
+
+---
+
+## Phase 2: REST API (Nov 25-27)
+
+| What we did | Why |
+| --- | --- |
+| Routes under `/api/v1` with JSON as the default format | Versioned URLs let the API change later without breaking the React app |
+| Trimmed routes to what the donor flow needs: `GET /funds`, `POST /donations`, `GET /donations/:id` | Fewer public routes means less to protect. Fund edits, donor lists and the donation list belong behind an admin login |
+| `Fund.active` scope used by `GET /funds` | A scope on the model can be reused by the API, admin and reports |
+| Controller at `app/controllers/api/v1/` | Modules become folders: `Api::V1::FundsController` lives at `api/v1/funds_controller.rb` |
+| `POST /donations` reads an `Idempotency-Key` header | A retried or double-clicked request must not create a second donation |
+| Replay returns 200 with the first donation; a new one returns 201 | Nothing new was created on the retry |
+| `rescue ActiveRecord::RecordNotUnique` as a backstop | Two same-key requests can both pass the `find_by`. The unique index lets one win, and the loser gets the winner's donation |
+| One error shape, `{ "errors": [...] }`, with `rescue_from` in `ApplicationController` | Missing params give 400, unknown ids give 404, validation failures give 422 |
+| `enum ..., validate: true` | A bad value like `"weekly"` is a 422 instead of a 500 |
+| `belongs_to :donor, autosave: true` | A smoke test found that a missing donor email crashed with a 500. Now it is a 422 |
+| Donors only get a name when they are new | Anyone who knew an email could otherwise rename that donor |
+| `GET /donations/:id` returns only six fields, no donor details | Ids in the URL are guessable, so the status page must not leak personal data |
+
+**Status codes to remember:** 400 = request incomplete (missing header). 422 = understood but the data is invalid (amount 0, unknown fund). 404 = the URL's own resource is missing. Success for a create is 201.
+
+**Mistakes and lessons**
+- A spec that checks only the status can pass by accident. A missing action also gives 404, so check the body too.
+- Code directly under `describe` runs at load time. Put it inside an `it`.
+- Stripe lives in a service object with a stubbed HTTP layer, so specs never reach the network.
+
+**Specs:** request specs for funds (1), create (7) and show (2).
+
+**Interview talking points**
+8. **Why 201 vs 200?** 201 means a new record was created. A replay with the same key creates nothing, so it is 200.
+9. **Why no donor details on the status page?** The id in the URL is guessable.
+10. **Why a header for the idempotency key?** It describes the request, not the donation data, and Stripe does the same.

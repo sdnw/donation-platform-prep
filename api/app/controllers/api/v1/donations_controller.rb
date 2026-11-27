@@ -1,6 +1,12 @@
 module Api
   module V1
     class DonationsController < ApplicationController
+      def show
+        # An unknown id raises RecordNotFound, which ApplicationController turns into a 404.
+        donation = Donation.find(params[:id])
+        render json: status_json(donation), status: :ok
+      end
+
       def create
         key = request.headers["Idempotency-Key"]
         return render_error("Idempotency-Key header is required", :bad_request) if key.blank?
@@ -62,6 +68,18 @@ module Api
             name: donation.donor.name,
             email: donation.donor.email
           }
+        }
+      end
+
+      # The ids in the URL are guessable, so the status page gets no donor details.
+      def status_json(donation)
+        {
+          id: donation.id,
+          status: donation.status,
+          amount_cents: donation.amount_cents,
+          currency: donation.currency,
+          frequency: donation.frequency,
+          fund_id: donation.fund_id
         }
       end
     end

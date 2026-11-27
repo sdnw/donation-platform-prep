@@ -89,3 +89,28 @@ RSpec.describe "POST /api/v1/donations", type: :request do
     expect(Donation.count).to eq(0)
   end
 end
+
+RSpec.describe "GET /api/v1/donations/:id", type: :request do
+  it "returns the donation status and no donor details" do
+    donation = create(:donation, :succeeded)
+
+    get "/api/v1/donations/#{donation.id}"
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to eq(
+      "id" => donation.id,
+      "status" => "succeeded",
+      "amount_cents" => donation.amount_cents,
+      "currency" => "usd",
+      "frequency" => "one_time",
+      "fund_id" => donation.fund_id
+    )
+  end
+
+  it "returns 404 when the donation does not exist" do
+    get "/api/v1/donations/0"
+
+    expect(response).to have_http_status(:not_found)
+    expect(response.parsed_body["errors"]).to include("Not found")
+  end
+end
