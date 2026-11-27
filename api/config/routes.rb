@@ -18,6 +18,6 @@ Rails.application.routes.draw do
 
   # Stripe webhook listener (kept outside /api/v1 so Stripe URLs remain static across API versions)
   namespace :webhooks do
-    post :stripe, to: 'stripe#create'
+    post :stripe, to: "stripe#create"
   end
 end
