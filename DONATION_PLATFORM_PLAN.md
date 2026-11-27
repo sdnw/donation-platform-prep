@@ -10,6 +10,53 @@ Purpose: rebuild the Valley Youth House style donation workflow from scratch so 
 - Each phase is tagged with the job requirement it covers, shown as `JD:`.
 - If time is short, do the Core phases (0 through 6) and only read the Stretch phases (7 through 10) so you can speak to them honestly.
 
+## Interview timeline and scope (updated 2026-11-25)
+
+Interview: Wednesday 2026-12-02, Developer Junior (Ruby on Rails / React). The format is a debugging situation, a conversation about how you work, and questions that validate your resume. That leaves seven days at about two hours a day, so this section replaces the pacing at the bottom of this file. The day-by-day schedule lives in the interview prep doc.
+
+Where things stand: Phase 0 is done, Phase 1 is merged (its phase gate items are still open), and Phase 2 has started. `GET /funds` works and has a request spec. The donations controller and its request spec are still generated stubs.
+
+This repo has two jobs now: refresh the donation workflow you will be asked to explain, and give you code to plant bugs in and to rewrite from a blank file. The main prep is repetition on Rails, Ruby, JavaScript, and React fundamentals using the drill page, so protect that time first.
+
+| Tier | What | Deadline |
+| --- | --- | --- |
+| Build | Finish Phase 2 (`POST /donations`, `GET /donations/:id`, strong params, `rescue_from`, real request specs). Then the core of Phase 3: `Donations::Create`, `Idempotency-Key` handling with the unique index, Stripe stubbed with WebMock, specs for a repeated request | Fri 2026-11-27 |
+| Thin | Phase 4 only: one donate form with controlled inputs, a fetch with loading and error states, and one React Testing Library test | Sat 2026-11-28 |
+| Kata only | Phase 5 Redux: write a small reducer and selector from a blank file in a scratch folder. Do not wire Redux into the app | Sat 2026-11-28 |
+| Explain only | Stripe webhook and event de-duplication, Phase 6 admin and reports, recurring gifts, Phases 7 to 9. Read the phase, answer the matching flashcards, say the talk-track aloud. Build the webhook only if you finish early | No build |
+| Shrunk | Phase 10 becomes the README architecture sketch (the TODO in `README.md`) and `docs/BUGS.md` logging each planted bug | Mon 2026-11-30 |
+
+Nothing is cut from what you can claim. You confirmed the original Valley Youth House workflow had Stripe, idempotency, webhooks, admin, reports, and recurring gifts, so you still explain every piece. "Explain only" means you do not rebuild it before the interview.
+
+### Planted-bug drill
+
+Use a throwaway branch so your real work stays clean. Switch to the bug branch, then ask Claude Code: "Plant one realistic bug in the donation request path. Do not tell me where and do not show the diff. Commit it on this branch."
+
+```bash
+git switch -c bug/planted-1
+```
+
+Find it out loud with the six steps: clarify, read the error, reproduce, isolate, one hypothesis and one change, verify and add a test. Then log it in `docs/BUGS.md` and clean up.
+
+```bash
+git switch phase-2/api
+git branch -D bug/planted-1
+```
+
+### Write-from-blank kata
+
+Pick something you already wrote, such as the `in_range` scope and its spec. Delete it on a throwaway branch, rewrite it from memory, then compare against the original.
+
+```bash
+git switch -c kata/scope-spec
+```
+
+```bash
+git diff phase-2/api -- api/app/models/donation.rb api/spec/models/donation_spec.rb
+```
+
+Before you build `POST /donations`, note that the routes file defines only `show` and `create` for donations, while the generated controller and spec stubs reference `index`. Reconcile those yourself as part of Phase 2.
+
 ## Mentor protocol
 
 The goal is junior-level competence you can demonstrate live, so the struggle of forming the solution stays with you.
@@ -409,6 +456,8 @@ Talk-track: how an upload travels from the browser to S3 and how least privilege
 - [ ] One paragraph on how the status transitions in Phase 3 relate to workflow engines such as Camunda, which model the same idea as an explicit process diagram
 
 ## Suggested pacing
+
+Superseded for the 2026-12-02 interview by "Interview timeline and scope" near the top of this file. The table below is the original open-ended pacing.
 
 | Time available | What to do |
 | --- | --- |

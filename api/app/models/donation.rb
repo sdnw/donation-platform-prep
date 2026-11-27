@@ -1,12 +1,14 @@
 class Donation < ApplicationRecord
-  belongs_to :donor
+  # autosave: true validates a brand-new donor together with the donation, so a bad donor gives a 422, not a crash.
+  belongs_to :donor, autosave: true
   belongs_to :fund
 
-  enum :status, [ :pending, :processing, :succeeded, :failed, :refunded ]
+  # validate: true turns a bad value like "weekly" into a normal validation error (422) instead of a crash (500).
+  enum :status, [ :pending, :processing, :succeeded, :failed, :refunded ], validate: true
   enum :frequency, {
     one_time: 0,
     monthly: 1
-  }
+  }, validate: true
 
   validates :idempotency_key,
   presence: true,

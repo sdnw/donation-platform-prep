@@ -7,4 +7,17 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      resources :funds, only: %i[index]
+
+      resources :donations, only: %i[show create]
+    end
+  end
+
+  # Stripe webhook listener (kept outside /api/v1 so Stripe URLs remain static across API versions)
+  namespace :webhooks do
+    post :stripe, to: "stripe#create"
+  end
 end
