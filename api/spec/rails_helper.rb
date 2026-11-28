@@ -12,6 +12,7 @@ require 'rspec/rails'
 # WebMock blocks every real HTTP call in specs, so a test can never reach Stripe.
 require 'webmock/rspec'
 WebMock.disable_net_connect!(allow_localhost: true)
+require_relative 'support/stripe_stubs'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -39,6 +40,7 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
+  config.include StripeStubs
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')

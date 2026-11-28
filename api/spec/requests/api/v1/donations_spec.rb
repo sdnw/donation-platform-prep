@@ -14,11 +14,16 @@ RSpec.describe "POST /api/v1/donations", type: :request do
     }
   end
 
+  before do
+    stub_stripe_create
+    stub_stripe_retrieve
+  end
+
   def post_donation(body = payload, extra_headers = headers)
     post "/api/v1/donations", params: body, headers: extra_headers, as: :json
   end
 
-  it "creates a pending donation and returns 201" do
+  it "creates a pending donation and returns 201 with a client_secret" do
     post_donation
 
     expect(response).to have_http_status(:created)
@@ -27,11 +32,13 @@ RSpec.describe "POST /api/v1/donations", type: :request do
     expect(json["amount_cents"]).to eq(5000)
     expect(json["currency"]).to eq("usd")
     expect(json["donor"]["email"]).to eq("kiki@example.com")
+    expect(json["client_secret"]).to eq("pi_test_1_secret_abc")
     expect(Donation.count).to eq(1)
     expect(Donor.count).to eq(1)
+    expect(Donation.last.stripe_payment_intent_id).to eq("pi_test_1")
   end
 
-  it "returns the same donation when the same key is sent twice" do
+  it "returns the same donation and client_secret when the same key is sent twice" do
     post_donation
     first_id = response.parsed_body["id"]
 
@@ -39,7 +46,9 @@ RSpec.describe "POST /api/v1/donations", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body["id"]).to eq(first_id)
+    expect(response.parsed_body["client_secret"]).to eq("pi_test_1_secret_abc")
     expect(Donation.count).to eq(1)
+    expect(stripe_create_request).to have_been_made.once
   end
 
   it "returns 400 when the Idempotency-Key header is missing" do
@@ -50,14 +59,15 @@ RSpec.describe "POST /api/v1/donations", type: :request do
     expect(Donation.count).to eq(0)
   end
 
-  it "returns 422 when amount_cents is 0" do
+  it "returns 422 and never calls Stripe when amount_cents is 0" do
     payload[:donation][:amount_cents] = 0
 
     post_donation
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body["errors"]).to include("Amount cents must be greater than 0")
     expect(Donation.count).to eq(0)
+    expect(stripe_create_request).not_to have_been_made
   end
 
   it "returns 422 when the fund does not exist" do
@@ -65,7 +75,7 @@ RSpec.describe "POST /api/v1/donations", type: :request do
 
     post_donation
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body["errors"]).to include("Fund must exist")
   end
 
@@ -74,7 +84,7 @@ RSpec.describe "POST /api/v1/donations", type: :request do
 
     post_donation
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.parsed_body["errors"]).to include("Donor email can't be blank")
     expect(Donation.count).to eq(0)
     expect(Donor.count).to eq(0)
@@ -85,8 +95,18 @@ RSpec.describe "POST /api/v1/donations", type: :request do
 
     post_donation
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(Donation.count).to eq(0)
+  end
+
+  it "returns 502 and marks the donation failed when Stripe rejects the request" do
+    stub_stripe_error
+
+    post_donation
+
+    expect(response).to have_http_status(:bad_gateway)
+    expect(response.parsed_body["errors"].first).to include("Payment could not be started")
+    expect(Donation.last.status).to eq("failed")
   end
 end
 

@@ -1,9 +1,6 @@
 require "rails_helper"
 
 RSpec.describe Donations::Create do
-  STRIPE_CREATE_URL = "https://api.stripe.com/v1/payment_intents".freeze
-  JSON_HEADERS = { "Content-Type" => "application/json" }.freeze
-
   let(:fund) { create(:fund) }
   let(:amount) { 5000 }
   let(:params) { ActionController::Parameters.new(amount_cents: amount, fund_id: fund.id, frequency: "one_time").permit! }
@@ -12,19 +9,6 @@ RSpec.describe Donations::Create do
 
   def call_service
     described_class.call(params: params, donor_params: donor_params, idempotency_key: key)
-  end
-
-  # Fake Stripe replies. Nothing leaves the machine: WebMock answers instead.
-  def stub_stripe_create(id: "pi_test_1", secret: "pi_test_1_secret_abc")
-    stub_request(:post, STRIPE_CREATE_URL)
-      .to_return(status: 200, headers: JSON_HEADERS,
-                 body: { id: id, object: "payment_intent", client_secret: secret }.to_json)
-  end
-
-  def stub_stripe_retrieve(id: "pi_test_1", secret: "pi_test_1_secret_abc")
-    stub_request(:get, "#{STRIPE_CREATE_URL}/#{id}")
-      .to_return(status: 200, headers: JSON_HEADERS,
-                 body: { id: id, object: "payment_intent", client_secret: secret }.to_json)
   end
 
   it "saves a pending donation, stores the PaymentIntent id and returns the client_secret" do
@@ -45,7 +29,7 @@ RSpec.describe Donations::Create do
 
     call_service
 
-    expect(a_request(:post, STRIPE_CREATE_URL).with(headers: { "Idempotency-Key" => key })).to have_been_made.once
+    expect(stripe_create_request.with(headers: { "Idempotency-Key" => key })).to have_been_made.once
   end
 
   context "when the input is invalid" do
@@ -59,7 +43,7 @@ RSpec.describe Donations::Create do
       expect(result.errors).to include("Amount cents must be greater than 0")
       expect(Donation.count).to eq(0)
       expect(Donor.count).to eq(0)
-      expect(a_request(:post, STRIPE_CREATE_URL)).not_to have_been_made
+      expect(stripe_create_request).not_to have_been_made
     end
   end
 
@@ -74,15 +58,11 @@ RSpec.describe Donations::Create do
     expect(second.donation).to eq(first.donation)
     expect(second.client_secret).to eq("pi_test_1_secret_abc")
     expect(Donation.count).to eq(1)
-    expect(a_request(:post, STRIPE_CREATE_URL)).to have_been_made.once
+    expect(stripe_create_request).to have_been_made.once
   end
 
   context "when Stripe rejects the request" do
-    before do
-      stub_request(:post, STRIPE_CREATE_URL)
-        .to_return(status: 400, headers: JSON_HEADERS,
-                   body: { error: { type: "invalid_request_error", message: "bad request" } }.to_json)
-    end
+    before { stub_stripe_error }
 
     it "marks the donation failed and returns an error" do
       result = call_service
